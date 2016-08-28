@@ -1,5 +1,6 @@
 package main 
 
+import "errors"
 import "bytes"
 import "strings"
 import "testing"
@@ -21,10 +22,8 @@ func (s *TestSuite) TestDocumentWithSnowman(c *C) {
 
   _, err = buf.WriteString("Hello world\n")
   c.Assert(err,IsNil)
-
   _, err = buf.WriteString("Do you know what a snowman is?\n")
   c.Assert(err,IsNil) 
-
   _, err = buf.WriteString("Hello bob\n")
   c.Assert(err,IsNil)
 
@@ -43,10 +42,8 @@ func (s *TestSuite) TestDocumentWithSnowmanTwice(c *C) {
 
   _, err = buf.WriteString("Hello world\n")
   c.Assert(err,IsNil)
-
   _, err = buf.WriteString("Do you know what a snowman snowman is?\n")
   c.Assert(err,IsNil) 
-
   _, err = buf.WriteString("Hello bob\n")
   c.Assert(err,IsNil)
 
@@ -65,10 +62,8 @@ func (s *TestSuite) TestDocumentWithoutSnowman(c *C) {
 
   _, err = buf.WriteString("Hello world\n")
   c.Assert(err,IsNil)
-
   _, err = buf.WriteString("Do you know what a yeti is?\n")
   c.Assert(err,IsNil) 
-
   _, err = buf.WriteString("Hello bob\n")
   c.Assert(err,IsNil)
 
@@ -129,4 +124,20 @@ func (s *TestSuite) TestDocumentWithWindowsNewlines(c *C){
 
 }
 
+// Failure cases
+
+type failureReader int //Type does not matter here
+
+var failureReaderSentinel = errors.New("Sentinel from failure reader")
+
+func (failureReader) Read([]byte) (int, error) {
+  return 0, failureReaderSentinel
+}
+
+func (s *TestSuite) TestReaderFailure(c *C) {
+  reader := NewWinterWonderland(failureReader(0))
+  var output [1]byte
+  _, err := reader.Read(output[:])
+  c.Assert(err, Equals, failureReaderSentinel)
+}
 
